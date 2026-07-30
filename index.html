@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Olympus Mangosteen Café - KDS App</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Firebase App (Modular/Compat SDKs) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <style>
     :root {
         --bg-primary: #0b0f19;
@@ -68,7 +71,10 @@
     .kitchen-note { font-size: 0.75rem; color: var(--accent); background: rgba(56, 189, 248, 0.08); padding: 4px 8px; border-radius: 6px; width: fit-content; border-left: 2px solid var(--accent); }
 
     .toggle-container { display: flex; gap: 8px; }
-    .toggle-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid transparent; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .toggle-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid transparent; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; pointer-events: none; opacity: 0.6; }
+    /* Owner mode active hone par hi buttons click ho sakenge */
+    body.is-owner .toggle-btn { pointer-events: auto; opacity: 1; }
+
     .btn-available { background-color: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
     .btn-available.active { background-color: #22c55e; color: #ffffff; box-shadow: 0 0 12px rgba(34, 197, 94, 0.4); }
     .btn-unavailable { background-color: var(--danger-bg); color: var(--danger-text); border-color: var(--danger-border); }
@@ -81,13 +87,13 @@
     <div class="app-header">
         <div class="header-top">
             <div class="brand-title">☕ Olympus Mangosteen Café</div>
-            <div class="role-switcher" id="roleSwitcher" onclick="requestOwnerMode()">
-                <span id="roleIcon">🔒</span> <span id="roleText">Kitchen Staff</span>
+            <div class="role-switcher" id="roleSwitcher" onclick="toggleRole()">
+                <span id="roleIcon">🔒</span> <span id="roleText">Kitchen Staff (View Only)</span>
             </div>
         </div>
         <div class="status-row">
             <span>Terminal: <b>KDS-01</b></span>
-            <span><span class="live-dot"></span>Ready</span>
+            <span><span class="live-dot"></span>Live Connected</span>
         </div>
     </div>
 
@@ -98,7 +104,7 @@
     <div class="admin-panel" id="adminPanel">
         <div class="admin-title">
             <span>👑 Owner Master Control</span>
-            <span class="logout-text" onclick="lockOwnerMode()">Lock Out</span>
+            <span class="logout-text" onclick="toggleRole()">Lock Out</span>
         </div>
         <div class="admin-buttons">
             <button class="admin-btn all-on" onclick="setAllStatus(true)">⚡ Set All Available</button>
@@ -110,103 +116,185 @@
         <!-- Category 1 -->
         <div class="category-section">
             <div class="category-title">1. Breakfast & Morning Combos</div>
-            <div class="dish-card" id="item_1" data-name="English Breakfast" data-note="Sausage & Eggs Ready">
+            <div class="dish-card" id="item_1" data-name="English Breakfast">
                 <div class="dish-name">English Breakfast</div>
                 <div class="kitchen-note">Note: Sausage & Eggs Ready</div>
                 <div class="toggle-container">
-                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_1', true)">✓ AVAILABLE</button>
-                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_1', false)">✕ NOT AVAILABLE</button>
+                    <button class="toggle-btn btn-available active" id="btn_1_true" onclick="updateStatus('item_1', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_1_false" onclick="updateStatus('item_1', false)">✕ NOT AVAILABLE</button>
                 </div>
             </div>
             <div class="dish-card" id="item_2" data-name="Dalia Bowl">
                 <div class="dish-name">Dalia Bowl</div>
                 <div class="toggle-container">
-                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_2', true)">✓ AVAILABLE</button>
-                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_2', false)">✕ NOT AVAILABLE</button>
+                    <button class="toggle-btn btn-available active" id="btn_2_true" onclick="updateStatus('item_2', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_2_false" onclick="updateStatus('item_2', false)">✕ NOT AVAILABLE</button>
                 </div>
             </div>
             <div class="dish-card" id="item_3" data-name="Sprout Moonglet">
                 <div class="dish-name">Sprout Moonglet</div>
                 <div class="toggle-container">
-                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_3', true)">✓ AVAILABLE</button>
-                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_3', false)">✕ NOT AVAILABLE</button>
+                    <button class="toggle-btn btn-available active" id="btn_3_true" onclick="updateStatus('item_3', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_3_false" onclick="updateStatus('item_3', false)">✕ NOT AVAILABLE</button>
                 </div>
             </div>
             <div class="dish-card" id="item_4" data-name="Eggs">
                 <div class="dish-name">Eggs</div>
                 <div class="toggle-container">
-                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_4', true)">✓ AVAILABLE</button>
-                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_4', false)">✕ NOT AVAILABLE</button>
+                    <button class="toggle-btn btn-available active" id="btn_4_true" onclick="updateStatus('item_4', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_4_false" onclick="updateStatus('item_4', false)">✕ NOT AVAILABLE</button>
                 </div>
             </div>
             <div class="dish-card" id="item_5" data-name="Turkish Breakfast">
                 <div class="dish-name">Turkish Breakfast</div>
                 <div class="toggle-container">
-                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_5', true)">✓ AVAILABLE</button>
-                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_5', false)">✕ NOT AVAILABLE</button>
+                    <button class="toggle-btn btn-available active" id="btn_5_true" onclick="updateStatus('item_5', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_5_false" onclick="updateStatus('item_5', false)">✕ NOT AVAILABLE</button>
                 </div>
             </div>
             <div class="dish-card" id="item_6" data-name="Fried Egg / Over Easy">
                 <div class="dish-name">Fried Egg / Over Easy</div>
                 <div class="toggle-container">
-                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_6', true)">✓ AVAILABLE</button>
-                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_6', false)">✕ NOT AVAILABLE</button>
+                    <button class="toggle-btn btn-available active" id="btn_6_true" onclick="updateStatus('item_6', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_6_false" onclick="updateStatus('item_6', false)">✕ NOT AVAILABLE</button>
                 </div>
             </div>
             <div class="dish-card" id="item_7" data-name="Parsi Akuri">
                 <div class="dish-name">Parsi Akuri</div>
                 <div class="toggle-container">
-                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_7', true)">✓ AVAILABLE</button>
-                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_7', false)">✕ NOT AVAILABLE</button>
+                    <button class="toggle-btn btn-available active" id="btn_7_true" onclick="updateStatus('item_7', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_7_false" onclick="updateStatus('item_7', false)">✕ NOT AVAILABLE</button>
                 </div>
             </div>
             <div class="dish-card" id="item_8" data-name="Turkish Shakshuka">
                 <div class="dish-name">Turkish Shakshuka</div>
                 <div class="toggle-container">
-                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_8', true)">✓ AVAILABLE</button>
-                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_8', false)">✕ NOT AVAILABLE</button>
+                    <button class="toggle-btn btn-available active" id="btn_8_true" onclick="updateStatus('item_8', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_8_false" onclick="updateStatus('item_8', false)">✕ NOT AVAILABLE</button>
                 </div>
             </div>
             <div class="dish-card" id="item_9" data-name="Turkish Egg">
                 <div class="dish-name">Turkish Egg</div>
                 <div class="toggle-container">
-                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_9', true)">✓ AVAILABLE</button>
-                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_9', false)">✕ NOT AVAILABLE</button>
+                    <button class="toggle-btn btn-available active" id="btn_9_true" onclick="updateStatus('item_9', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_9_false" onclick="updateStatus('item_9', false)">✕ NOT AVAILABLE</button>
                 </div>
             </div>
             <div class="dish-card" id="item_10" data-name="Egg White Omelette">
                 <div class="dish-name">Egg White Omelette</div>
                 <div class="toggle-container">
-                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_10', true)">✓ AVAILABLE</button>
-                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_10', false)">✕ NOT AVAILABLE</button>
+                    <button class="toggle-btn btn-available active" id="btn_10_true" onclick="updateStatus('item_10', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_10_false" onclick="updateStatus('item_10', false)">✕ NOT AVAILABLE</button>
                 </div>
             </div>
             <div class="dish-card" id="item_11" data-name="Masala Omelette">
                 <div class="dish-name">Masala Omelette</div>
                 <div class="toggle-container">
-                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_11', true)">✓ AVAILABLE</button>
-                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_11', false)">✕ NOT AVAILABLE</button>
+                    <button class="toggle-btn btn-available active" id="btn_11_true" onclick="updateStatus('item_11', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_11_false" onclick="updateStatus('item_11', false)">✕ NOT AVAILABLE</button>
                 </div>
             </div>
             <div class="dish-card" id="item_12" data-name="Cheese Omelette">
                 <div class="dish-name">Cheese Omelette</div>
                 <div class="toggle-container">
-                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_12', true)">✓ AVAILABLE</button>
-                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_12', false)">✕ NOT AVAILABLE</button>
+                    <button class="toggle-btn btn-available active" id="btn_12_true" onclick="updateStatus('item_12', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_12_false" onclick="updateStatus('item_12', false)">✕ NOT AVAILABLE</button>
                 </div>
             </div>
             <div class="dish-card" id="item_13" data-name="Spanish Omelette">
                 <div class="dish-name">Spanish Omelette</div>
                 <div class="toggle-container">
-                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_13', true)">✓ AVAILABLE</button>
-                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_13', false)">✕ NOT AVAILABLE</button>
+                    <button class="toggle-btn btn-available active" id="btn_13_true" onclick="updateStatus('item_13', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_13_false" onclick="updateStatus('item_13', false)">✕ NOT AVAILABLE</button>
                 </div>
             </div>
             <div class="dish-card" id="item_14" data-name="Sausage Fricassee">
                 <div class="dish-name">Sausage Fricassee</div>
                 <div class="toggle-container">
-                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_14', true)">✓ AVAILABLE</button>
-                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_14', false)">✕ NOT AVAILABLE</button>
+                    <button class="toggle-btn btn-available active" id="btn_14_true" onclick="updateStatus('item_14', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_14_false" onclick="updateStatus('item_14', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category 2 -->
+        <div class="category-section">
+            <div class="category-title">2. Healthy Bowls & Salads</div>
+            <div class="dish-card" id="item_15" data-name="Acai Bowl">
+                <div class="dish-name">Acai Bowl</div>
+                <div class="kitchen-note">Note: Frozen Berries Prepared</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" id="btn_15_true" onclick="updateStatus('item_15', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_15_false" onclick="updateStatus('item_15', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_16" data-name="Berry & Seed Bowl">
+                <div class="dish-name">Berry & Seed Bowl</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" id="btn_16_true" onclick="updateStatus('item_16', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_16_false" onclick="updateStatus('item_16', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_17" data-name="Green Goddess Bowl">
+                <div class="dish-name">Green Goddess Bowl</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" id="btn_17_true" onclick="updateStatus('item_17', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_17_false" onclick="updateStatus('item_17', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_18" data-name="Tropical Mango Bowl">
+                <div class="dish-name">Tropical Mango Bowl</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" id="btn_18_true" onclick="updateStatus('item_18', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_18_false" onclick="updateStatus('item_18', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_19" data-name="Classic Caesar Salad">
+                <div class="dish-name">Classic Caesar Salad</div>
+                <div class="kitchen-note">Note: Lettuce Prepped</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" id="btn_19_true" onclick="updateStatus('item_19', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_19_false" onclick="updateStatus('item_19', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_20" data-name="Greek Salad">
+                <div class="dish-name">Greek Salad</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" id="btn_20_true" onclick="updateStatus('item_20', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_20_false" onclick="updateStatus('item_20', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_21" data-name="Burrata & Tomato Salad">
+                <div class="dish-name">Burrata & Tomato Salad</div>
+                <div class="kitchen-note">Note: Fresh Burrata in Stock</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" id="btn_21_true" onclick="updateStatus('item_21', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_21_false" onclick="updateStatus('item_21', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_22" data-name="Tandoor Smoked Chicken Salad">
+                <div class="dish-name">Tandoor Smoked Chicken Salad</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" id="btn_22_true" onclick="updateStatus('item_22', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_22_false" onclick="updateStatus('item_22', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category 3 -->
+        <div class="category-section">
+            <div class="category-title">3. Burgers, Sandwiches & Small Plates</div>
+            <div class="dish-card" id="item_23" data-name="Mexican Veg Burger">
+                <div class="dish-name">Mexican Veg Burger</div>
+                <div class="kitchen-note">Note: Patties Ready</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" id="btn_23_true" onclick="updateStatus('item_23', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_23_false" onclick="updateStatus('item_23', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_24" data-name="Mangosteen Chicken Burger">
+                <div class="dish-name">Mangosteen Chicken Burger</div>
+                          <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_14', false)">✕ NOT AVAILABLE</button>
                 </div>
             </div>
         </div>
