@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Olympus Mangosteen Café - KDS App</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg-primary: #0b0f19;
+        --bg-secondary: #131b2e;
+        --bg-card: #1e293b;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --accent: #38bdf8;
+        --success-bg: rgba(34, 197, 94, 0.15);
+        --success-text: #4ade80;
+        --success-border: rgba(34, 197, 94, 0.4);
+        --danger-bg: rgba(239, 68, 68, 0.15);
+        --danger-text: #f87171;
+        --danger-border: rgba(239, 68, 68, 0.4);
+        --border-color: #334155;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-primary); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
+
+    .app-frame {
+        width: 100%; max-width: 430px; height: 100vh; max-height: 932px;
+        background-color: var(--bg-primary); display: flex; flex-direction: column;
+        position: relative; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    }
+    @media (min-width: 431px) {
+        .app-frame { border: 12px solid #1e293b; border-radius: 40px; height: 90vh; }
+    }
+
+    .app-header { background-color: var(--bg-secondary); padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px; z-index: 10; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; }
+    .brand-title { font-size: 1.1rem; font-weight: 700; color: var(--accent); }
+    
+    .role-switcher {
+        background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent); color: var(--accent);
+        padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 650; cursor: pointer; display: flex; align-items: center; gap: 6px;
+    }
+    .role-switcher.owner-mode { background: rgba(34, 197, 94, 0.15); border-color: var(--success-text); color: var(--success-text); }
+
+    .status-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted); }
+    .live-dot { height: 8px; width: 8px; background-color: #22c55e; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #22c55e; margin-right: 4px; }
+
+    .search-container { padding: 12px 16px; background-color: var(--bg-primary); border-bottom: 1px solid var(--border-color); }
+    .search-input { width: 100%; padding: 10px 14px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 0.9rem; outline: none; }
+
+    .admin-panel { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); border: 1px solid #6366f1; margin: 12px 16px 0 16px; padding: 12px; border-radius: 14px; display: none; }
+    .admin-panel.active { display: block; }
+    .admin-title { font-size: 0.8rem; font-weight: 700; color: #a5b4fc; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .logout-text { font-size: 0.65rem; color: #f87171; cursor: pointer; text-decoration: underline; }
+    .admin-buttons { display: flex; gap: 8px; }
+    .admin-btn { flex: 1; padding: 8px; border-radius: 8px; border: none; font-weight: 600; font-size: 0.75rem; cursor: pointer; color: white; }
+    .admin-btn.all-on { background-color: #16a34a; }
+    .admin-btn.all-off { background-color: #dc2626; }
+
+    .app-content { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 20px; }
+    .category-section { display: flex; flex-direction: column; gap: 10px; }
+    .category-title { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; }
+
+    .dish-card { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+    .dish-name { font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
+    .kitchen-note { font-size: 0.75rem; color: var(--accent); background: rgba(56, 189, 248, 0.08); padding: 4px 8px; border-radius: 6px; width: fit-content; border-left: 2px solid var(--accent); }
+
+    .toggle-container { display: flex; gap: 8px; }
+    .toggle-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid transparent; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-available { background-color: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
+    .btn-available.active { background-color: #22c55e; color: #ffffff; box-shadow: 0 0 12px rgba(34, 197, 94, 0.4); }
+    .btn-unavailable { background-color: var(--danger-bg); color: var(--danger-text); border-color: var(--danger-border); }
+    .btn-unavailable.active { background-color: #ef4444; color: #ffffff; box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
+</style>
+</head>
+<body>
+
+<div class="app-frame">
+    <div class="app-header">
+        <div class="header-top">
+            <div class="brand-title">☕ Olympus Mangosteen Café</div>
+            <div class="role-switcher" id="roleSwitcher" onclick="requestOwnerMode()">
+                <span id="roleIcon">🔒</span> <span id="roleText">Kitchen Staff</span>
+            </div>
+        </div>
+        <div class="status-row">
+            <span>Terminal: <b>KDS-01</b></span>
+            <span><span class="live-dot"></span>Ready</span>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search dish name..." onkeyup="filterDishes()">
+    </div>
+
+    <div class="admin-panel" id="adminPanel">
+        <div class="admin-title">
+            <span>👑 Owner Master Control</span>
+            <span class="logout-text" onclick="lockOwnerMode()">Lock Out</span>
+        </div>
+        <div class="admin-buttons">
+            <button class="admin-btn all-on" onclick="setAllStatus(true)">⚡ Set All Available</button>
+            <button class="admin-btn all-off" onclick="setAllStatus(false)">🚫 Set All Sold Out</button>
+        </div>
+    </div>
+
+    <div class="app-content" id="menuContainer">
+        <!-- Category 1 -->
+        <div class="category-section">
+            <div class="category-title">1. Breakfast & Morning Combos</div>
+            <div class="dish-card" id="item_1" data-name="English Breakfast" data-note="Sausage & Eggs Ready">
+                <div class="dish-name">English Breakfast</div>
+                <div class="kitchen-note">Note: Sausage & Eggs Ready</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_1', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_1', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_2" data-name="Dalia Bowl">
+                <div class="dish-name">Dalia Bowl</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_2', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_2', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_3" data-name="Sprout Moonglet">
+                <div class="dish-name">Sprout Moonglet</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_3', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_3', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_4" data-name="Eggs">
+                <div class="dish-name">Eggs</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_4', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_4', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_5" data-name="Turkish Breakfast">
+                <div class="dish-name">Turkish Breakfast</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_5', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_5', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_6" data-name="Fried Egg / Over Easy">
+                <div class="dish-name">Fried Egg / Over Easy</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_6', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_6', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_7" data-name="Parsi Akuri">
+                <div class="dish-name">Parsi Akuri</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_7', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_7', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_8" data-name="Turkish Shakshuka">
+                <div class="dish-name">Turkish Shakshuka</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_8', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_8', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_9" data-name="Turkish Egg">
+                <div class="dish-name">Turkish Egg</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_9', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_9', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_10" data-name="Egg White Omelette">
+                <div class="dish-name">Egg White Omelette</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_10', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_10', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_11" data-name="Masala Omelette">
+                <div class="dish-name">Masala Omelette</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_11', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_11', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_12" data-name="Cheese Omelette">
+                <div class="dish-name">Cheese Omelette</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_12', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_12', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_13" data-name="Spanish Omelette">
+                <div class="dish-name">Spanish Omelette</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_13', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_13', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_14" data-name="Sausage Fricassee">
+                <div class="dish-name">Sausage Fricassee</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_14', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_14', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category 2 -->
+        <div class="category-section">
+            <div class="category-title">2. Healthy Bowls & Salads</div>
+            <div class="dish-card" id="item_15" data-name="Acai Bowl" data-note="Frozen Berries Prepared">
+                <div class="dish-name">Acai Bowl</div>
+                <div class="kitchen-note">Note: Frozen Berries Prepared</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_15', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_15', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_16" data-name="Berry & Seed Bowl">
+                <div class="dish-name">Berry & Seed Bowl</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_16', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_16', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_17" data-name="Green Goddess Bowl">
+                <div class="dish-name">Green Goddess Bowl</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_17', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_17', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_18" data-name="Tropical Mango Bowl">
+                <div class="dish-name">Tropical Mango Bowl</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_18', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_18', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_19" data-name="Classic Caesar Salad" data-note="Lettuce Prepped">
+                <div class="dish-name">Classic Caesar Salad</div>
+                <div class="kitchen-note">Note: Lettuce Prepped</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_19', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_19', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_20" data-name="Greek Salad">
+                <div class="dish-name">Greek Salad</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_20', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_20', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_21" data-name="Burrata & Tomato Salad" data-note="Fresh Burrata in Stock">
+                <div class="dish-name">Burrata & Tomato Salad</div>
+                <div class="kitchen-note">Note: Fresh Burrata in Stock</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_21', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_21', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_22" data-name="Tandoor Smoked Chicken Salad">
+                <div class="dish-name">Tandoor Smoked Chicken Salad</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_22', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_22', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category 3 -->
+        <div class="category-section">
+            <div class="category-title">3. Burgers, Sandwiches & Small Plates</div>
+            <div class="dish-card" id="item_23" data-name="Mexican Veg Burger" data-note="Patties Ready">
+                <div class="dish-name">Mexican Veg Burger</div>
+                <div class="kitchen-note">Note: Patties Ready</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_23', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_23', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_24" data-name="Mangosteen Chicken Burger">
+                <div class="dish-name">Mangosteen Chicken Burger</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_24', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_24', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_25" data-name="Pulled Chicken Burger" data-note="BBQ Chicken Marinated">
+                <div class="dish-name">Pulled Chicken Burger</div>
+                <div class="kitchen-note">Note: BBQ Chicken Marinated</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_25', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_25', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_26" data-name="Banh Mi">
+                <div class="dish-name">Banh Mi</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_26', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_26', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_27" data-name="Truffle Fries" data-note="Guacamole Prepped">
+                <div class="dish-name">Truffle Fries</div>
+                <div class="kitchen-note">Note: Guacamole Prepped</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_27', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_27', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_28" data-name="Loaded Nachos">
+                <div class="dish-name">Loaded Nachos</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_28', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_28', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_29" data-name="Chicken Karaage" data-note="Hummus & Falafel Ready">
+                <div class="dish-name">Chicken Karaage</div>
+                <div class="kitchen-note">Note: Hummus & Falafel Ready</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_29', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_29', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_30" data-name="Mezze">
+                <div class="dish-name">Mezze</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_30', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_30', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category 4 -->
+        <div class="category-section">
+            <div class="category-title">4. Pizza, Pide & Pasta</div>
+            <div class="dish-card" id="item_31" data-name="Margarita Pizza" data-note="Dough Proofed">
+                <div class="dish-name">Margarita Pizza</div>
+                <div class="kitchen-note">Note: Dough Proofed</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_31', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_31', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_32" data-name="Creamy Spinach Pizza">
+                <div class="dish-name">Creamy Spinach Pizza</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_32', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_32', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_33" data-name="Quattro Formaggi" data-note="Cheeses Stocked">
+                <div class="dish-name">Quattro Formaggi</div>
+                <div class="kitchen-note">Note: Cheeses Stocked</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_33', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_33', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_34" data-name="Burrata Pizza">
+                <div class="dish-name">Burrata Pizza</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_34', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_34', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_35" data-name="Chicken Keema Pizza" data-note="Keema Mix Prepared">
+                <div class="dish-name">Chicken Keema Pizza</div>
+                <div class="kitchen-note">Note: Keema Mix Prepared</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_35', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_35', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_36" data-name="Chicken Keema Pide">
+                <div class="dish-name">Chicken Keema Pide</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_36', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_36', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <!-- Separated Pasta Items -->
+            <div class="dish-card" id="item_37" data-name="Arrabiata Pasta" data-note="Penne & Spaghetti Pre-boiled">
+                <div class="dish-name">Arrabiata Pasta</div>
+                <div class="kitchen-note">Note: Penne & Spaghetti Pre-boiled</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_37', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_37', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_38" data-name="Pink Pasta" data-note="Penne & Spaghetti Pre-boiled">
+                <div class="dish-name">Pink Pasta</div>
+                <div class="kitchen-note">Note: Penne & Spaghetti Pre-boiled</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_38', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_38', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_39" data-name="Pesto Pasta" data-note="Penne & Spaghetti Pre-boiled">
+                <div class="dish-name">Pesto Pasta</div>
+                <div class="kitchen-note">Note: Penne & Spaghetti Pre-boiled</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_39', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_39', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_40" data-name="Truffle Pasta" data-note="Penne & Spaghetti Pre-boiled">
+                <div class="dish-name">Truffle Pasta</div>
+                <div class="kitchen-note">Note: Penne & Spaghetti Pre-boiled</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_40', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_40', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_41" data-name="Mushroom & Mutton Ragu Pasta" data-note="Ragu Sauce Simmered">
+                <div class="dish-name">Mushroom & Mutton Ragu Pasta</div>
+                <div class="kitchen-note">Note: Ragu Sauce Simmered</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_41', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_41', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category 5 -->
+        <div class="category-section">
+            <div class="category-title">5. Main Course & Desserts</div>
+            <div class="dish-card" id="item_42" data-name="Herb Grilled Chicken" data-note="Chicken Breast Marinated">
+                <div class="dish-name">Herb Grilled Chicken</div>
+                <div class="kitchen-note">Note: Chicken Breast Marinated</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_42', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_42', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_43" data-name="Braised Leg" data-note="Chicken Leg Prepped">
+                <div class="dish-name">Braised Leg</div>
+                <div class="kitchen-note">Note: Chicken Leg Prepped</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_43', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_43', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_44" data-name="Grilled Fish" data-note="Fresh Seafood Cleaned">
+                <div class="dish-name">Grilled Fish</div>
+                <div class="kitchen-note">Note: Fresh Seafood Cleaned</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_44', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_44', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_45" data-name="Prawns">
+                <div class="dish-name">Prawns</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_45', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_45', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_46" data-name="Thai Green Curry" data-note="Curry Paste Ready">
+                <div class="dish-name">Thai Green Curry</div>
+                <div class="kitchen-note">Note: Curry Paste Ready</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_46', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_46', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_47" data-name="Phad Thai">
+                <div class="dish-name">Phad Thai</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_47', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_47', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_48" data-name="Pizzokie" data-note="Dessert Counter Ready">
+                <div class="dish-name">Pizzokie</div>
+                <div class="kitchen-note">Note: Dessert Counter Ready</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_48', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_48', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_49" data-name="Cheesecake" data-note="Dessert Counter Ready">
+                <div class="dish-name">Cheesecake</div>
+                <div class="kitchen-note">Note: Dessert Counter Ready</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_49', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_49', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_50" data-name="Baklawa" data-note="Pistachio ready">
+                <div class="dish-name">Baklawa</div>
+                <div class="kitchen-note">Note: Pistachio ready</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_50', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_50', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_51" data-name="Cannoli" data-note="Ice cream ready">
+                <div class="dish-name">Cannoli</div>
+                <div class="kitchen-note">Note: Ice cream ready</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available active" onclick="updateStatus('item_51', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" onclick="updateStatus('item_51', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let isOwnerMode = localStorage.getItem('isOwnerMode') === 'true';
+    const OWNER_PIN = "1234"; // Yahan aap apna pasandeeda PIN rakh sakte hain
+
+    // Initialize UI based on saved login state
+    window.onload = function() {
+        if (isOwnerMode) {
+            activateOwnerUI();
+        }
+        for (let i = 1; i <= 51; i++) {
+            let saved = localStorage.getItem('item_' + i);
+            if (saved !== null) {
+                applyStatusToUI('item_' + i, saved === 'true');
+            }
+        }
+    };
+
+    function requestOwnerMode() {
+        if (isOwnerMode) {
+            // Already in owner mode, clicking can lock it back
+            lockOwnerMode();
+            return;
+        }
+
+        let enteredPin = prompt("Enter Owner PIN to unlock Master Control:");
+        if (enteredPin === OWNER_PIN) {
+            isOwnerMode = true;
+            localStorage.setItem('isOwnerMode', 'true');
+            activateOwnerUI();
+            alert("Owner Mode Unlocked Successfully!");
+        } else if (enteredPin !== null) {
+            alert("Incorrect PIN! Access Denied.");
+        }
+    }
+
+    function activateOwnerUI() {
+        const switcher = document.getElementById('roleSwitcher');
+        const roleIcon = document.getElementById('roleIcon');
+        const roleText = document.getElementById('roleText');
+        const adminPanel = document.getElementById('adminPanel');
+
+        switcher.classList.add('owner-mode');
+        roleIcon.innerText = "👑";
+        roleText.innerText = "Owner Mode";
+        adminPanel.classList.add('active');
+    }
+
+    function lockOwnerMode() {
+        isOwnerMode = false;
+        localStorage.setItem('isOwnerMode', 'false');
+        const switcher = document.getElementById('roleSwitcher');
+        const roleIcon = document.getElementById('roleIcon');
+        const roleText = document.getElementById('roleText');
+        const adminPanel = document.getElementById('adminPanel');
+
+        switcher.classList.remove('owner-mode');
+        roleIcon.innerText = "🔒";
+        roleText.innerText = "Kitchen Staff";
+        adminPanel.classList.remove('active');
+        alert("Locked back to Kitchen Staff mode.");
+    }
+
+    function updateStatus(id, isAvailable) {
+        localStorage.setItem(id, isAvailable);
+        applyStatusToUI(id, isAvailable);
+    }
+
+    function applyStatusToUI(id, isAvailable) {
+        const card = document.getElementById(id);
+        if (!card) return;
+        const availBtn = card.querySelector('.btn-available');
+        const unavailBtn = card.querySelector('.btn-unavailable');
+
+        if (isAvailable) {
+            availBtn.classList.add('active');
+            unavailBtn.classList.remove('active');
+        } else {
+            unavailBtn.classList.add('active');
+            availBtn.classList.remove('active');
+        }
+    }
+
+    function setAllStatus(isAvailable) {
+        if (!isOwnerMode) {
+            alert("Please unlock Owner Mode first!");
+            return;
+        }
+        for (let i = 1; i <= 51; i++) {
+            updateStatus('item_' + i, isAvailable);
+        }
+    }
+
+    function filterDishes() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const cards = document.querySelectorAll('.dish-card');
+        cards.forEach(card => {
+            const name = card.getAttribute('data-name').toLowerCase();
+            const note = (card.getAttribute('data-note') || "").toLowerCase();
+            if (name.includes(query) || note.includes(query)) {
+                card.style.display = "flex";
+            } else {
+                card.style.display = "none";
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
