@@ -294,4 +294,111 @@
                 <div class="dish-name">Mangosteen Chicken Burger</div>
                 <div class="toggle-container">
                     <button class="toggle-btn btn-available" id="btn_24_true" onclick="updateStatus('item_24', true)">✓ AVAILABLE</button>
-                    <button class="toggle-btn btn-unavailable" id="btn_24_false" onclick="updateStatus('item_24', fal
+                    <button class="toggle-btn btn-unavailable" id="btn_24_false" onclick="updateStatus('item_24', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_25" data-name="Pulled Chicken Burger">
+                <div class="dish-name">Pulled Chicken Burger</div>
+                <div class="kitchen-note">Note: BBQ Chicken Marinated</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available" id="btn_25_true" onclick="updateStatus('item_25', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_25_false" onclick="updateStatus('item_25', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+            <div class="dish-card" id="item_26" data-name="Banh Mi">
+                <div class="dish-name">Banh Mi</div>
+                <div class="toggle-container">
+                    <button class="toggle-btn btn-available" id="btn_26_true" onclick="updateStatus('item_26', true)">✓ AVAILABLE</button>
+                    <button class="toggle-btn btn-unavailable" id="btn_26_false" onclick="updateStatus('item_26', false)">✕ NOT AVAILABLE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        databaseURL: "https://kitchen-kds-854d8-default-rtdb.firebaseio.com/"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let isAdminUnlocked = false;
+
+    function toggleAdminRole() {
+        if (!isAdminUnlocked) {
+            let pin = prompt("Enter Owner PIN to unlock Master Control (Enter 1234):");
+            if (pin === "1234") {
+                isAdminUnlocked = true;
+                document.getElementById('roleSwitcher').className = "role-switcher owner-mode";
+                document.getElementById('roleIcon').innerText = "👑";
+                document.getElementById('roleText').innerText = "Admin Master Unlocked";
+                document.getElementById('adminPanel').classList.add('active');
+            } else if (pin !== null) {
+                alert("Incorrect PIN!");
+            }
+        } else {
+            isAdminUnlocked = false;
+            document.getElementById('roleSwitcher').className = "role-switcher";
+            document.getElementById('roleIcon').innerText = "🔒";
+            document.getElementById('roleText').innerText = "Admin Master Lock";
+            document.getElementById('adminPanel').classList.remove('active');
+        }
+    }
+
+    function updateStatus(itemId, isAvailable) {
+        db.ref('items/' + itemId).set(isAvailable);
+    }
+
+    function setAllStatus(isAvailable) {
+        if (!isAdminUnlocked) {
+            alert("🔒 Master Control is locked! Enter Owner PIN first.");
+            return;
+        }
+        let updates = {};
+        for (let i = 1; i <= 26; i++) {
+            updates['item_' + i] = isAvailable;
+        }
+        db.ref('items').set(updates);
+    }
+
+    db.ref('items').on('value', (snapshot) => {
+        const data = snapshot.val() || {};
+        for (let i = 1; i <= 26; i++) {
+            let itemId = 'item_' + i;
+            let isAvailable = data[itemId] !== undefined ? data[itemId] : true;
+            
+            let btnAvail = document.getElementById('btn_' + i + '_true');
+            let btnUnavail = document.getElementById('btn_' + i + '_false');
+            let card = document.getElementById(itemId);
+
+            if (btnAvail && btnUnavail && card) {
+                if (isAvailable) {
+                    btnAvail.classList.add('active');
+                    btnUnavail.classList.remove('active');
+                    card.style.opacity = "1";
+                } else {
+                    btnAvail.classList.remove('active');
+                    btnUnavail.classList.add('active');
+                    card.style.opacity = "0.5";
+                }
+            }
+        }
+    });
+
+    function filterDishes() {
+        let input = document.getElementById('searchInput').value.toLowerCase();
+        let cards = document.querySelectorAll('.dish-card');
+        cards.forEach(card => {
+            let name = card.getAttribute('data-name').toLowerCase();
+            if (name.includes(input)) {
+                card.style.display = "flex";
+            } else {
+                card.style.display = "none";
+            }
+        });
+    }
+</script>
+</body>
+</html>
