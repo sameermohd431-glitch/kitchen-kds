@@ -71,8 +71,7 @@
     .kitchen-note { font-size: 0.75rem; color: var(--accent); background: rgba(56, 189, 248, 0.08); padding: 4px 8px; border-radius: 6px; width: fit-content; border-left: 2px solid var(--accent); }
 
     .toggle-container { display: flex; gap: 8px; }
-    .toggle-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid transparent; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; pointer-events: none; opacity: 0.6; }
-    body.is-owner .toggle-btn { pointer-events: auto; opacity: 1; }
+    .toggle-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid transparent; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
 
     .btn-available { background-color: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
     .btn-available.active { background-color: #22c55e; color: #ffffff; box-shadow: 0 0 12px rgba(34, 197, 94, 0.4); }
@@ -86,8 +85,8 @@
     <div class="app-header">
         <div class="header-top">
             <div class="brand-title">☕ Olympus Mangosteen Café</div>
-            <div class="role-switcher" id="roleSwitcher" onclick="toggleRole()">
-                <span id="roleIcon">🔒</span> <span id="roleText">Kitchen Staff (View Only)</span>
+            <div class="role-switcher" id="roleSwitcher" onclick="toggleAdminRole()">
+                <span id="roleIcon">🔒</span> <span id="roleText">Admin Master Lock</span>
             </div>
         </div>
         <div class="status-row">
@@ -102,8 +101,8 @@
 
     <div class="admin-panel" id="adminPanel">
         <div class="admin-title">
-            <span>👑 Owner Master Control</span>
-            <span class="logout-text" onclick="toggleRole()">Lock Out</span>
+            <span>👑 Owner Master Control (All On/Off)</span>
+            <span class="logout-text" onclick="toggleAdminRole()">Lock Panel</span>
         </div>
         <div class="admin-buttons">
             <button class="admin-btn all-on" onclick="setAllStatus(true)">⚡ Set All Available</button>
@@ -325,41 +324,39 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let isOwner = false;
+    let isAdminUnlocked = false;
 
-    function toggleRole() {
-        if (!isOwner) {
-            let pin = prompt("Enter Owner PIN (Enter 1234):");
+    function toggleAdminRole() {
+        if (!isAdminUnlocked) {
+            let pin = prompt("Enter Owner PIN to unlock Master Control (Enter 1234):");
             if (pin === "1234") {
-                isOwner = true;
-                document.body.classList.add('is-owner');
+                isAdminUnlocked = true;
                 document.getElementById('roleSwitcher').className = "role-switcher owner-mode";
                 document.getElementById('roleIcon').innerText = "👑";
-                document.getElementById('roleText').innerText = "Owner Mode Active";
+                document.getElementById('roleText').innerText = "Admin Master Unlocked";
                 document.getElementById('adminPanel').classList.add('active');
             } else if (pin !== null) {
                 alert("Incorrect PIN!");
             }
         } else {
-            isOwner = false;
-            document.body.classList.remove('is-owner');
+            isAdminUnlocked = false;
             document.getElementById('roleSwitcher').className = "role-switcher";
             document.getElementById('roleIcon').innerText = "🔒";
-            document.getElementById('roleText').innerText = "Kitchen Staff (View Only)";
+            document.getElementById('roleText').innerText = "Admin Master Lock";
             document.getElementById('adminPanel').classList.remove('active');
         }
     }
 
     function updateStatus(itemId, isAvailable) {
-        if (!isOwner) {
-            alert("🔒 Kitchen staff is in View Only mode. Click the top lock icon and enter PIN (1234) to change status.");
-            return;
-        }
+        // Staff can update any single item in real-time freely
         db.ref('items/' + itemId).set(isAvailable);
     }
 
     function setAllStatus(isAvailable) {
-        if (!isOwner) return;
+        if (!isAdminUnlocked) {
+            alert("🔒 Master Control is locked!");
+            return;
+        }
         let updates = {};
         for (let i = 1; i <= 26; i++) {
             updates['item_' + i] = isAvailable;
